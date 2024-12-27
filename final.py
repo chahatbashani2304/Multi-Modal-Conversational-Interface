@@ -14,24 +14,24 @@ from transformers import BlipProcessor, BlipForConditionalGeneration
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-# Download necessary NLTK resources
+
 nltk.download('punkt')
 nltk.download('wordnet')
 nltk.download('punkt_tab')
 
-# Load your intents JSON file
+
 with open("C:\\Users\\CHAHAT BASHANI\\OneDrive\\Documents\\intents.json", 'r', encoding='utf-8') as file:
 
     data = json.load(file)
 
-# Initialize the speech recognizer
+
 recognizer = sr.Recognizer()
 
-# Initialize the BLIP model for image captioning
+
 blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
 
-# Preprocessing for chatbot
+
 words = []
 classes = []
 data_x = []
@@ -39,7 +39,7 @@ data_y = []
 
 lemmatizer = WordNetLemmatizer()
 
-# Tokenize and preprocess
+
 for intent in data["intents"]:
     for pattern in intent["patterns"]:
         tokens = nltk.word_tokenize(pattern)  # Tokenizing patterns
@@ -47,12 +47,12 @@ for intent in data["intents"]:
         data_x.append(pattern)
         data_y.append(intent["tag"])
 
-# Lemmatize and sort words and classes
+
 words = [lemmatizer.lemmatize(word.lower()) for word in words if word not in string.punctuation]
 words = sorted(set(words))
 classes = sorted(set(data_y))
 
-# Creating bag of words model
+
 training = []
 out_empty = [0] * len(classes)
 
@@ -67,14 +67,14 @@ for idx, doc in enumerate(data_x):
 
     training.append([bow, output_row])
 
-# Shuffle training data and convert to numpy array
+
 random.shuffle(training)
 training = np.array(training, dtype=object)
 
 train_X = np.array(list(training[:, 0]))
 train_Y = np.array(list(training[:, 1]))
 
-# Neural network model
+
 model = Sequential()
 model.add(Dense(128, input_shape=(len(train_X[0]),), activation='relu'))
 model.add(Dropout(0.5))
@@ -89,43 +89,43 @@ def model_compile(loss, optimizer, metrics):
 
 model_compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-# Train the model
+
 model.fit(x=train_X, y=train_Y, epochs=150, verbose=1)
 
-# Function to predict the class of the input message
+
 def pred_class(message, words, classes):
-    # Tokenize and lemmatize the input message
+    
     message_words = nltk.word_tokenize(message)
     message_words = [lemmatizer.lemmatize(w.lower()) for w in message_words]
 
-    # Create a bag of words for the message
+   
     bow = [0] * len(words)
     for s in message_words:
         if s in words:
             bow[words.index(s)] = 1
 
-    # Predict the intent
+   
     pred = model.predict(np.array([bow]))  # Predict using the trained model
     return pred
 
-# Function to get the chatbot's response
+
 def get_response(intents_list, data):
-    tag = intents_list[0]['intent']  # Extract the intent tag
+    tag = intents_list[0]['intent'] 
     list_of_intents = data['intents']
     result = ""
 
     for intent in list_of_intents:
         if intent['tag'] == tag:
-            result = random.choice(intent['responses'])  # Randomly select a response
+            result = random.choice(intent['responses'])  
             break
     return result
 
-# Function to recognize speech from an uploaded audio file
+
 def recognize_audio(file_path):
     with sr.AudioFile(file_path) as source:
         audio = recognizer.record(source)
     try:
-        # Recognize the audio using Google Web Speech API
+        
         text = recognizer.recognize_google(audio)
         return text
     except sr.UnknownValueError:
@@ -133,7 +133,7 @@ def recognize_audio(file_path):
     except sr.RequestError:
         return "Sorry, there was an error with the speech recognition service."
 
-# GUI for Tkinter
+
 class ChatApp:
     def __init__(self, root):
         self.root = root
@@ -155,11 +155,11 @@ class ChatApp:
         self.image_button = tk.Button(root, text="Upload Image", width=10, command=self.upload_image)
         self.image_button.pack(pady=5)
 
-        # Quit button to close the application at the bottom-right corner
+        
         self.quit_button = tk.Button(root, text="Quit", width=10, command=self.quit_app)
         self.quit_button.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
 
-        # Handling window close event
+       
         self.root.protocol("WM_DELETE_WINDOW", self.quit_app)
 
     def send_message(self):
@@ -170,7 +170,7 @@ class ChatApp:
         intents = pred_class(user_message, words, classes)
         intent = {"intent": classes[np.argmax(intents)]}
         response = get_response([intent], data)
-        self.chat_display.insert(tk.END, f"Bot: {response}\n\n")  # Added blank line after bot's response
+        self.chat_display.insert(tk.END, f"Bot: {response}\n\n")  
 
     def upload_audio(self):
         file_path = filedialog.askopenfilename(filetypes=[("Audio Files", "*.wav *.mp3")])
@@ -181,7 +181,7 @@ class ChatApp:
             intents = pred_class(text_from_audio, words, classes)
             intent = {"intent": classes[np.argmax(intents)]}
             response = get_response([intent], data)
-            self.chat_display.insert(tk.END, f"Bot: {response}\n\n")  # Added blank line after bot's response
+            self.chat_display.insert(tk.END, f"Bot: {response}\n\n")  
 
     def upload_image(self):
         file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.jpeg *.png")])
@@ -190,11 +190,11 @@ class ChatApp:
             inputs = blip_processor(raw_image, return_tensors="pt")
             out = blip_model.generate(**inputs)
             caption = blip_processor.decode(out[0], skip_special_tokens=True)
-            self.chat_display.insert(tk.END, f"Image Caption: {caption}\n\n")  # Added blank line after caption
+            self.chat_display.insert(tk.END, f"Image Caption: {caption}\n\n")  
 
     def quit_app(self):
-        self.root.quit()  # Ends the Tkinter event loop and closes the application
-        self.root.destroy()  # Destroys the main window
+        self.root.quit()  
+        self.root.destroy() 
 
 if __name__ == "__main__":
     root = tk.Tk()
