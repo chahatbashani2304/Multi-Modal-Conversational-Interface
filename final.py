@@ -42,7 +42,7 @@ lemmatizer = WordNetLemmatizer()
 
 for intent in data["intents"]:
     for pattern in intent["patterns"]:
-        tokens = nltk.word_tokenize(pattern)  # Tokenizing patterns
+        tokens = nltk.word_tokenize(pattern)  
         words.extend(tokens)
         data_x.append(pattern)
         data_y.append(intent["tag"])
@@ -105,7 +105,7 @@ def pred_class(message, words, classes):
             bow[words.index(s)] = 1
 
    
-    pred = model.predict(np.array([bow]))  # Predict using the trained model
+    pred = model.predict(np.array([bow])) 
     return pred
 
 
